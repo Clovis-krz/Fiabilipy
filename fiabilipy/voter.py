@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 #Copyright (C) 2013 Chabot Simon, Sadaoui Akim
@@ -23,7 +23,6 @@ This modude gives tools to design voters and compute some metrics, such as the
 reliability, the availability, the Mean-Time-To-Failure, and so on.
 
 """
-from builtins import range
 
 from sympy import exp, Symbol, oo
 from scipy.special import binom
@@ -33,7 +32,8 @@ from fiabilipy.component import Component
 
 __all__ = ['Voter']
 
-ALLSUBSETS = lambda n: (chain(*[combinations(list(range(n)), ni)
+#PREMIER CHANGEMENT
+ALLSUBSETS = lambda n: (chain(*[combinations(range(n), ni)
                         for ni in range(n+1)]))
 
 class Voter(Component):
@@ -82,6 +82,7 @@ class Voter(Component):
             and the minimal number of components.
         """
         prob = 0
+        #DEUXIEME CHANGEMENT
         for k in range(self.M, self.N+1):
             a = getattr(self.component, method)(t)**k
             b = (1 - getattr(self.component, method)(t))**(self.N-k)

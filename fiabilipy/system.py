@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 #Copyright (C) 2013 Chabot Simon, Sadaoui Akim
@@ -24,24 +24,22 @@ compute some metrics, such as the reliability, the availability, the
 Mean-Time-To-Failure, and so on.
 
 """
-from __future__ import print_function
-from builtins import range
-from builtins import object
 
 from numpy import empty, ones, delete
 from sympy import exp, Symbol, oo
 from scipy.special import binom
 from itertools import combinations, chain
-from collections import Iterable
+from collections.abc import Iterable
 import networkx as nx
+from functools import reduce
 
 from fiabilipy import Component
-from functools import reduce
 
 __all__ = ['System']
 
-ALLSUBSETS = lambda n: (chain(*[combinations(list(range(n)), ni)
-                        for ni in range(n+1)]))
+ALLSUBSETS = lambda n: (chain(*[combinations(range(n), ni)
+                        for ni in range
+                                (n+1)]))
 
 
 class System(object):
@@ -65,7 +63,8 @@ class System(object):
         Thus, to represent such a system, you must create the three
         components C0, C1 and C2 and link them.
 
-        >>> C = [Component(i, 1e-4) for i in xrange(3)]
+        >>> C = [Component(i, 1e-4) for i in range
+        (3)]
         >>> S = System()
         >>> S['E'] = [C[0], C[1]]
         >>> S[C[0]] = [C[2]]
@@ -79,12 +78,11 @@ class System(object):
 
     def __init__(self, graph=None):
         self._graph = nx.DiGraph(graph)
-        self._map = {'E':'E','S':'S'} #FIXME create map str -> component in case graph is non empty
         self._cache = {}
         self._t = Symbol('t', positive=True)
 
     def __getitem__(self, component):
-        return self._map[self._graph[component.__str__()]]
+        return self._graph[component]
 
     def __setitem__(self, component, successors):
         #Let’s do different checks before inserting the element
@@ -99,9 +97,7 @@ class System(object):
         for successor in successors:
             if successor != 'S':
                 successor._systems.add(self)
-            self._graph.add_edge(component.__str__(), successor.__str__())
-            self._map[component.__str__()]=component
-            self._map[successor.__str__()]=successor #FIXME this may be optional
+            self._graph.add_edge(component, successor)
 
         #reset the cache
         self._cache = {}
@@ -109,15 +105,14 @@ class System(object):
     def __delitem__(self, component):
         for c in self._graph:
             try:
-                self._graph.remove_edge(c, component.__str__())
+                self._graph.remove_edge(c, component)
             except nx.NetworkXError: #i.e. edge(c, component) does not exist
                 pass
             except AttributeError:
                 assert self._graph[c] == 'S'
-        self._graph.remove_node(component.__str__())
+        self._graph.remove_node(component)
         if component not in self.components:
             component._systems.remove(self)
-            del self._map[component.__str__()]
         #reset the cache
         self._cache = {}
 
@@ -144,7 +139,6 @@ class System(object):
         _copy['E'] = [] #'E' must be the first inserted component
         for c in self._graph:
             _copy[c] = self[c][:]
-        _copy._map = self._map.copy()
         return _copy
 
     @property
@@ -157,8 +151,7 @@ class System(object):
                 the list of the components used by the system, except `E` and
                 `S`
         """
-        #FIXME Vincent it should be the component not its str
-        return [self._map[comp] for comp in self._graph if comp not in ('E', 'S')]
+        return [comp for comp in self._graph if comp not in ('E', 'S')]
 
     def _probabilitiescomputation(self, t, method):
         """ Given a system and a `method` (either availability or
@@ -417,7 +410,7 @@ class System(object):
             >>> list(S.findallpaths(start=powers[0])) #doctest: +NORMALIZE_WHITESPACE
             [[Component(P0), Component(M), 'S']]
         """
-        return [[self._map[x] for x in l] for l in nx.all_simple_paths(self._graph, start.__str__(), end.__str__())]
+        return nx.all_simple_paths(self._graph, start, end)
 
     def minimalcuts(self, order=1):
         r""" List the minimal cuts of the system of order <= `order`
@@ -455,8 +448,10 @@ class System(object):
         paths = self.successpaths
         incidence = empty((len(paths), len(self.components)))
 
-        for path in range(len(paths)):
-            for comp in range(len(self.components)):
+        for path in range\
+                    (len(paths)):
+            for comp in range\
+                        (len(self.components)):
                 if self.components[comp] in paths[path]:
                     incidence[path, comp] = 1
                 else:
@@ -465,13 +460,15 @@ class System(object):
         pairs = list(self.components)
         minimal = []
 
-        for k in range(1, order+1):
+        for k in range\
+                    (1, order+1):
             if incidence.shape[1] == 0: #No more minimalcuts
                 break
             #Let’s looking for column of ones
             vones = ones(len(paths))
             indicetodelete = []
-            for comp in range(len(pairs)):
+            for comp in range\
+                        (len(pairs)):
                 if (incidence[:, comp] == vones).all():
                     if isinstance(pairs[comp], frozenset):
                         minimal.append(pairs[comp])
@@ -486,10 +483,12 @@ class System(object):
 
             incidence = delete(incidence, indicetodelete, axis=1)
             pairs = [p for i, p in enumerate(pairs) if i not in indicetodelete]
-            newpairs = list(combinations(list(range(len(pairs))), k+1))
+            newpairs = list(combinations(range(len(pairs)), k+1))
             incidence_ = empty((len(paths), len(newpairs)))
-            for x in range(incidence_.shape[0]):
-                for y in range(incidence_.shape[1]):
+            for x in range\
+                        (incidence_.shape[0]):
+                for y in range\
+                            (incidence_.shape[1]):
                     value = 0
                     for comp in newpairs[y]:
                         if incidence[x, comp]:
